@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // fetch, Request and Response types for the client and the webhook handler.
+    "lib": ["es2023", "dom"],
+    // node:crypto for the HMAC signature (sites and CMS run on Node.js).
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

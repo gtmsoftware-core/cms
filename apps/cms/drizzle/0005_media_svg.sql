@@ -1,0 +1,1 @@
+ALTER TYPE "public"."media_mime" ADD VALUE 'image/svg+xml';
