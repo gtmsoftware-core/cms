@@ -27,8 +27,10 @@ export function createR2MediaStorage(config: R2Config, fetchImpl: typeof fetch =
   const objectUrl = (key: string) => `https://${config.accountId}.r2.cloudflarestorage.com/${config.bucket}/${key}`;
 
   async function send(method: 'PUT' | 'DELETE', key: string, init: RequestInit = {}) {
-    const request = await client.sign(objectUrl(key), { method, ...init });
-    const response = await fetchImpl(request);
+    const signed = await client.sign(objectUrl(key), { method, ...init });
+    // Sends the original body, not the signed Request: its body is a stream, so the fetch
+    // patched by Next.js uploads it chunked, without the Content-Length that R2 requires (411).
+    const response = await fetchImpl(signed.url, { method, headers: signed.headers, body: init.body ?? null });
     if (!response.ok && !(method === 'DELETE' && response.status === 404)) {
       const error = new MediaStorageError(`R2 ${method} failed with status ${response.status} ${await errorCodeOf(response)}`.trim());
       console.error(error.message);

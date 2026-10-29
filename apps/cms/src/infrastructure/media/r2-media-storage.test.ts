@@ -12,8 +12,10 @@ const config = {
 describe('R2 media storage', () => {
   it('sends signed S3 requests to the account endpoint', async () => {
     const requests: Request[] = [];
-    const storage = createR2MediaStorage(config, async (input) => {
-      requests.push(input instanceof Request ? input : new Request(input));
+    const bodies: unknown[] = [];
+    const storage = createR2MediaStorage(config, async (input, init) => {
+      requests.push(new Request(input, init));
+      bodies.push(init?.body);
       return new Response(null, { status: 200 });
     });
 
@@ -26,6 +28,8 @@ describe('R2 media storage', () => {
     ]);
     expect(requests[0]?.headers.get('authorization')).toMatch(/^AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE\//);
     expect(requests[0]?.headers.get('content-type')).toBe('image/png');
+    // A byte array, not a stream: R2 refuses chunked uploads without Content-Length.
+    expect(bodies[0]).toEqual(new Uint8Array([1, 2, 3]));
     expect(storage.publicUrl('tnt_1/site_1/med_1.png')).toBe('https://media.exemplo.com/tnt_1/site_1/med_1.png');
   });
 
