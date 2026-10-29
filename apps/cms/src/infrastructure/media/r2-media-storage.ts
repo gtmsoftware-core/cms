@@ -1,5 +1,5 @@
 import { AwsClient } from 'aws4fetch';
-import type { MediaStorage } from '@/application/media';
+import { MediaStorageError, type MediaStorage } from '@/application/media';
 
 export type R2Config = Readonly<{
   accountId: string;
@@ -9,6 +9,12 @@ export type R2Config = Readonly<{
   /** Public address of the bucket (r2.dev subdomain or a custom domain). */
   publicUrl: string;
 }>;
+
+/** S3 error code from the XML body (e.g. AccessDenied), safe to log: it carries no credentials. */
+async function errorCodeOf(response: Response): Promise<string> {
+  const body = await response.text().catch(() => '');
+  return /<Code>([^<]+)<\/Code>/.exec(body)?.[1] ?? '';
+}
 
 /** Production storage: Cloudflare R2 through its S3-compatible API, signed with SigV4. */
 export function createR2MediaStorage(config: R2Config, fetchImpl: typeof fetch = fetch): MediaStorage {
@@ -24,7 +30,9 @@ export function createR2MediaStorage(config: R2Config, fetchImpl: typeof fetch =
     const request = await client.sign(objectUrl(key), { method, ...init });
     const response = await fetchImpl(request);
     if (!response.ok && !(method === 'DELETE' && response.status === 404)) {
-      throw new Error(`R2 ${method} failed with status ${response.status}`);
+      const error = new MediaStorageError(`R2 ${method} failed with status ${response.status} ${await errorCodeOf(response)}`.trim());
+      console.error(error.message);
+      throw error;
     }
   }
 

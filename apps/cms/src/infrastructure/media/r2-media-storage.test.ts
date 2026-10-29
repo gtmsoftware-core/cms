@@ -30,7 +30,11 @@ describe('R2 media storage', () => {
   });
 
   it('fails loudly when R2 refuses the upload', async () => {
-    const storage = createR2MediaStorage(config, async () => new Response(null, { status: 403 }));
-    await expect(storage.put('k', new Uint8Array([1]), 'image/png')).rejects.toThrow('R2 PUT failed with status 403');
+    const body = '<?xml version="1.0"?><Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>';
+    const storage = createR2MediaStorage(config, async () => new Response(body, { status: 403 }));
+    await expect(storage.put('k', new Uint8Array([1]), 'image/png')).rejects.toMatchObject({
+      name: 'MediaStorageError',
+      message: 'R2 PUT failed with status 403 AccessDenied',
+    });
   });
 });

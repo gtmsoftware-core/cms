@@ -20,6 +20,7 @@ const MESSAGES: Readonly<Record<string, string>> = {
   UnsupportedMediaTypeError: 'Formato não aceito. Envie JPG, PNG, WebP, GIF, AVIF ou SVG.',
   UnsafeSvgError: 'Este SVG tem scripts ou links externos e não pode ser usado. Exporte o arquivo de novo como imagem simples ou envie em PNG.',
   MediaTooLargeError: 'Imagem grande demais. O limite é 4 MB.',
+  MediaStorageError: 'Não foi possível salvar a imagem no armazenamento. Tente de novo em instantes; se continuar, avise o suporte.',
   ZodError: 'Confira os campos do formulário.',
 };
 
