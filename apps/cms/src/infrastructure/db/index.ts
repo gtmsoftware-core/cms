@@ -1,2 +1,9 @@
-export { createDatabase, type Database, type DatabaseOptions, type Executor } from './client';
+export {
+  createPgliteDatabase,
+  createPostgresDatabase,
+  migratePostgres,
+  type Database,
+  type Executor,
+  type PgliteOptions,
+} from './client';
 export * as tables from './schema';

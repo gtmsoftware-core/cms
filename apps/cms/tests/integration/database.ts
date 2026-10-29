@@ -4,12 +4,12 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { buildContainer, type ContainerOverrides } from '@/composition/container';
-import { createDatabase } from '@/infrastructure/db';
+import { createPgliteDatabase } from '@/infrastructure/db';
 
 const migrationsFolder = fileURLToPath(new URL('../../drizzle', import.meta.url));
 
 export async function createTestContainer(overrides: ContainerOverrides = {}) {
-  const db = await createDatabase({ migrationsFolder });
+  const db = await createPgliteDatabase({ migrationsFolder });
   const config = {
     authSecret: 'test-secret-with-at-least-32-characters',
     baseURL: 'http://localhost',

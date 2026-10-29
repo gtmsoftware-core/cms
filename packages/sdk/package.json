@@ -2,6 +2,11 @@
   "name": "@gtmsoftware-core/cms-sdk",
   "version": "0.3.0",
   "description": "Contrato p\u00fablico entre o CMS e os sites dos clientes.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gtmsoftware-core/cms.git",
+    "directory": "packages/sdk"
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {

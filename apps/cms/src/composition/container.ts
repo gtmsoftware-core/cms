@@ -42,7 +42,7 @@ import {
   createR2MediaStorage,
   type R2Config,
 } from '@/infrastructure/media';
-import { createDatabase, type Database } from '@/infrastructure/db';
+import { createPgliteDatabase, createPostgresDatabase, type Database } from '@/infrastructure/db';
 import {
   createAuth,
   createBetterAuthAuthenticator,
@@ -150,10 +150,7 @@ export type Container = ReturnType<typeof buildContainer>;
 
 async function createContainer(): Promise<Container> {
   const env = loadEnv();
-  const db = await createDatabase({
-    dataDir: path.resolve(env.PGLITE_DATA_DIR),
-    migrationsFolder: path.resolve('drizzle'),
-  });
+  const db = await databaseFrom(env);
   return buildContainer(db, {
     authSecret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
@@ -161,6 +158,11 @@ async function createContainer(): Promise<Container> {
     cronSecret: env.CRON_SECRET,
     media: mediaConfigFrom(env),
   });
+}
+
+function databaseFrom(env: Env): Promise<Database> {
+  if (env.DATABASE_URL) return Promise.resolve(createPostgresDatabase(env.DATABASE_URL));
+  return createPgliteDatabase({ dataDir: path.resolve(env.PGLITE_DATA_DIR), migrationsFolder: path.resolve('drizzle') });
 }
 
 function mediaConfigFrom(env: Env): MediaConfig {
@@ -178,8 +180,8 @@ function mediaConfigFrom(env: Env): MediaConfig {
   return { kind: 'local', dir: path.resolve(env.MEDIA_LOCAL_DIR) };
 }
 
-// PGlite allows a single open instance per data directory, so the container
-// is cached on globalThis to survive hot reloads in development.
+// One container per process: PGlite allows a single open instance per data directory,
+// and Postgres keeps one connection pool. Cached on globalThis to survive hot reloads.
 const cache = globalThis as typeof globalThis & { __cmsContainer?: Promise<Container> };
 
 export function getContainer(): Promise<Container> {

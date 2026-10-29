@@ -4,6 +4,8 @@ const R2_KEYS = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R
 
 const baseSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  /** Postgres connection string (Neon pooled). Without it, the CMS uses PGlite on the local disk. */
+  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }).optional(),
   PGLITE_DATA_DIR: z.string().min(1).default('.data/pglite'),
   BETTER_AUTH_SECRET: z.string().min(32, 'BETTER_AUTH_SECRET precisa de pelo menos 32 caracteres.'),
   BETTER_AUTH_URL: z.url(),
@@ -24,6 +26,10 @@ const baseSchema = z.object({
 
 /** R2 is all or nothing: a half-configured bucket would silently fall back to the local disk. */
 const envSchema = baseSchema.superRefine((env, ctx) => {
+  // On Vercel the disk is ephemeral: PGlite there would lose every write.
+  if (env.NODE_ENV === 'production' && !env.DATABASE_URL) {
+    ctx.addIssue({ code: 'custom', message: 'DATABASE_URL é obrigatória em produção.' });
+  }
   const present = R2_KEYS.filter((key) => env[key] !== undefined);
   if (present.length > 0 && present.length < R2_KEYS.length) {
     const missing = R2_KEYS.filter((key) => env[key] === undefined);

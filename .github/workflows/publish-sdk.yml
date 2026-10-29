@@ -1,0 +1,32 @@
+name: Publish SDK
+
+# Release: bump packages/sdk/package.json, commit, then `git tag sdk-v<version> && git push --tags`.
+on:
+  push:
+    tags: ['sdk-v*']
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: https://npm.pkg.github.com
+          scope: '@gtmsoftware-core'
+      - run: pnpm install --frozen-lockfile
+      - name: Tag matches package version
+        run: |
+          version=$(node -p "require('./packages/sdk/package.json').version")
+          test "sdk-v$version" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME não bate com a versão $version."; exit 1; }
+      - run: pnpm typecheck && pnpm test && pnpm validate:arch
+      - run: pnpm --filter @gtmsoftware-core/cms-sdk publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

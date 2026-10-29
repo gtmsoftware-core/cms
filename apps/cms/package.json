@@ -9,7 +9,9 @@
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "superadmin:create": "node --env-file-if-exists=.env.local --import tsx scripts/create-superadmin.ts",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --env-file-if-exists=.env.local --import tsx scripts/migrate.ts",
+    "vercel-build": "pnpm db:migrate && next build"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
@@ -34,6 +36,7 @@
     "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.63.0",
     "next": "^16.4.3",
+    "postgres": "^3.4.9",
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
